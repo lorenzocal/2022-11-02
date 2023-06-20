@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import it.polito.tdp.itunes.model.Album;
@@ -112,6 +113,7 @@ public class ItunesDAO {
 				result.add(new Genre(res.getInt("GenreId"), res.getString("Name")));
 			}
 			conn.close();
+			Collections.sort(result);
 		} catch (SQLException e) {
 			e.printStackTrace();
 			throw new RuntimeException("SQL Error");
@@ -140,5 +142,59 @@ public class ItunesDAO {
 	}
 
 	
+	public List<Track> getAllVertexes(Genre genre, Integer min, Integer max){
+		
+		final String sql = "SELECT * "
+				+ "FROM track "
+				+ "WHERE GenreId = ? "
+				+ "AND Milliseconds > ? "
+				+ "AND Milliseconds < ? ";
+		
+		List<Track> result = new ArrayList<Track>();
+		
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setInt(1, genre.getGenreId());
+			st.setInt(2, min*1000);
+			st.setInt(3,  max*1000);
+			ResultSet res = st.executeQuery();
+
+			while (res.next()) {
+				result.add(new Track(res.getInt("TrackId"), res.getString("Name"), 
+						res.getString("Composer"), res.getInt("Milliseconds"), 
+						res.getInt("Bytes"),res.getDouble("UnitPrice")));
+			
+			}
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+		return result;
+	}
+	
+	public List<Integer> getPlaylistsTrack(Track t){
+		final String sql = "SELECT pt.PlaylistId "
+				+ "FROM playlisttrack pt "
+				+ "WHERE pt.TrackId = ?";
+		List<Integer> result = new LinkedList<Integer>();
+		
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setInt(1, t.getTrackId());
+			ResultSet res = st.executeQuery();
+
+			while (res.next()) {
+				result.add(res.getInt("PlaylistId"));
+			}
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+		return result;
+	}
 	
 }

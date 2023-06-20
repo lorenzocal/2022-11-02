@@ -6,8 +6,11 @@ package it.polito.tdp.itunes;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.Set;
 
+import it.polito.tdp.itunes.model.Genre;
 import it.polito.tdp.itunes.model.Model;
+import it.polito.tdp.itunes.model.Track;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -32,7 +35,7 @@ public class FXMLController {
     private Button btnPlaylist; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbGenere"
-    private ComboBox<?> cmbGenere; // Value injected by FXMLLoader
+    private ComboBox<Genre> cmbGenere; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtDTOT"
     private TextField txtDTOT; // Value injected by FXMLLoader
@@ -48,12 +51,40 @@ public class FXMLController {
 
     @FXML
     void doCalcolaPlaylist(ActionEvent event) {
-
+    	try {
+    		Integer dTot = Integer.parseInt(this.txtDTOT.getText());
+    		this.model.avviaRicorsione(dTot);
+    		this.txtResult.appendText("Migliore playlist:\n");
+    		for (Track t : this.model.getBestPlaylist()) {
+    			this.txtResult.appendText(t + "\n");
+    		}
+    	} catch (NumberFormatException nfe) {
+    		this.txtResult.appendText("Il campo dTot contiene un valore non ammesso.\n");
+    	}
     }
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
-
+    	Genre genre = this.cmbGenere.getValue();
+    	try {
+    		Integer min = Integer.parseInt(this.txtMin.getText());
+        	Integer max = Integer.parseInt(this.txtMax.getText());
+        	this.model.createGraph(genre, min, max);
+        	if (this.model.nVertici() != "0") {
+        		this.txtResult.appendText("Grafo creato correttamente.\n");
+        		this.txtResult.appendText("Numero di vertici: " + this.model.nVertici() + "\n");
+            	this.txtResult.appendText("Numero di archi: " + this.model.nArchi() + "\n\n");
+            	for (Set<Track> set : this.model.connectedSets()) {
+            		this.txtResult.appendText("Componente avente " + set.size() + " vertici, inserita in " + this.model.countPlaylistsConnectedSet(set) + " playlists.\n\n");
+            	}
+        	}
+        	else {
+        		this.txtResult.appendText("Non è possibile creare un grafo dati i valori inseriti.\n");
+        	}
+    	} catch (NumberFormatException nfe) {
+    		this.txtResult.appendText("I campi numerici non contengono dei valori ammessi.\n");
+    	}
+    	
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -70,6 +101,7 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	this.cmbGenere.getItems().setAll(this.model.getAllGenres());
     }
 
 }
